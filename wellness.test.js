@@ -79,18 +79,18 @@ test('name and PWA identity preserve existing installation and storage',()=>{
   const manifest=JSON.parse(fs.readFileSync(new URL('./manifest.webmanifest',import.meta.url)));
   assert.equal(manifest.short_name,'おくすり記録');assert.equal(manifest.id,'./');assert.equal(manifest.start_url,'./');assert.ok(html.includes('おくすり記録'));assert.ok(!source.includes('class="brand">のみました'));
   const store=new LocalStore(core);assert.equal(store.dbName,'nomimashita-v1:/');
-  const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');assert.ok(sw.includes("'v3-1-name'"));for(const asset of ['wellness.js','medicine-view.js','brand-mark.svg'])assert.ok(sw.includes("'./"+asset+"'"));
+  const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');assert.ok(sw.includes("'v3-2-compact-rose'"));for(const asset of ['wellness.js','medicine-view.js','brand-mark.svg'])assert.ok(sw.includes("'./"+asset+"'"));
 });
 
 // Exercise the real application event handlers without a browser or personal data.
-async function appHarness(clock=()=>now){
+async function appHarness(clock=()=>now,seed=null){
   const elements=new Map(),events=new Map();
   const element=id=>{
     if(!elements.has(id))elements.set(id,{id,innerHTML:'',textContent:'',className:'',dataset:{},listeners:{},addEventListener(type,fn){this.listeners[type]=fn;},appendChild(){},showModal(){this.open=true;},close(){this.open=false;}});
     return elements.get(id);
   };
   const doc={getElementById:element,querySelectorAll:()=>[],body:{dataset:{}},addEventListener:(type,fn)=>events.set(type,fn),visibilityState:'visible',createElement:()=>({dataset:{}})};
-  class TestStore extends LocalStore { constructor(c){super(c,{memory:true,clock});} }
+  class TestStore extends LocalStore { constructor(c){super(c,{memory:true,clock});if(seed)this.value=structuredClone(seed);} }
   class Form { constructor(target){this.values=target.values;}get(name){return this.values[name]??null;}getAll(name){return this.values[name]||[];} }
   const source=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'');
   const ctx={createCore,LocalStore:TestStore,validateBackup,faceIcon,moodLabel,wellnessBanner,wellnessDetails,wellnessEditor,largeDate,verticalMedicines,document:doc,location:{href:'https://example.test/nomimashita/?demo=1'},URL,FormData:Form,Date,structuredClone,crypto:{randomUUID:()=> '12345678-1234-1234-1234-123456789012'},window:{scrollTo(){}},navigator:{},setTimeout(){},setInterval(){},clearTimeout(){}};
@@ -158,7 +158,7 @@ test('coral is a fourth theme and does not replace a saved preference during mig
 test('reference home has a large correct JST date and vertical medication rows',()=>{
   assert.ok(largeDate(day).includes('9月6日'));assert.ok(largeDate(day).includes('（日）'));assert.ok(largeDate('2027-01-01').includes('（金）'));
   const plans=[{id:'m_12345678',name:'薬A',note:'',slots:[{on:true,qty:1,time:'08:00',taken:true},{on:false},{on:true,qty:2,time:'20:00',taken:false}]},{id:'m_abcdefgh',name:'<薬B>',note:'<script>x</script>',slots:[{on:true,qty:1,time:'08:00',taken:false},{on:true,qty:1,time:'12:00',taken:false},{on:true,qty:1,time:'20:00',taken:false}]}];
-  const html=verticalMedicines(plans,day);assert.equal((html.match(/class="dose-list"/g)||[]).length,2);assert.equal((html.match(/data-check=/g)||[]).length,5);assert.ok(html.includes('（朝1錠・晩2錠）'));assert.ok(html.includes('（1錠）'));assert.ok(html.includes('昼 予定なし'));assert.ok(html.indexOf('薬A')<html.indexOf('&lt;薬B&gt;'));assert.ok(!html.includes('<script>'));assert.ok(html.includes('服用済み'));assert.ok(html.includes('round-check'));assert.ok(!html.includes('1/5'));
+  const html=verticalMedicines(plans,day);assert.equal((html.match(/class="dose-list"/g)||[]).length,2);assert.equal((html.match(/data-check=/g)||[]).length,5);assert.ok(html.includes('（朝1錠・晩2錠）'));assert.ok(html.includes('（1錠）'));assert.ok(!html.includes('予定なし'));assert.ok(html.indexOf('薬A')<html.indexOf('&lt;薬B&gt;'));assert.ok(!html.includes('<script>'));assert.ok(html.includes('服用済み'));assert.ok(html.includes('round-check'));assert.ok(!html.includes('1/5'));
 });
 test('app flow: selected bowel result persists in form and calendar and can be corrected',async()=>{
   const app=await appHarness();assert.ok(app.element('content').innerHTML.includes('9月6日'));assert.ok(app.element('heading').innerHTML.includes('設定を開く'));
@@ -172,4 +172,67 @@ test('app flow: selected bowel result persists in form and calendar and can be c
 test('bowel belongs to one day and is retained in backup after midnight and 05:00',()=>{
   let s=record(core.initial(now),{...sample(),bowel:'yes'});assert.equal(s.wellness[core.day('2026-09-06T16:00:00Z')].bowel,'yes');assert.equal(s.wellness[core.day(tomorrow)],undefined);
   s=record(s,{...sample(),bowel:'no'},'2026-09-07',tomorrow);s=record(s,{...sample(),bowel:'unrecorded'},day,tomorrow);assert.equal(s.wellness['2026-09-07'].bowel,'no');assert.equal(s.wellness[day].bowel,'unrecorded');assert.deepEqual(validateBackup(s,core,tomorrow),s);
+});
+
+function medicationSeed(mask=5){
+  const s=core.initial(now);
+  s.medicines=[{id:'m_12345678',revisions:[{day,name:'表示確認用の薬',note:'',active:true,slots:[0,1,2].map(i=>({on:!!(mask&(1<<i)),qty:i+1,time:['08:00','12:00','20:00'][i],remind:false}))}]}];
+  return s;
+}
+test('all seven schedules omit inactive home rows without reindexing morning/noon/evening',()=>{
+  for(let mask=1;mask<8;mask++){
+    const s=medicationSeed(mask),before=structuredClone(s),html=verticalMedicines(core.plans(s,day),day);
+    for(let i=0;i<3;i++)assert.equal(html.includes('data-slot="'+i+'"'),!!(mask&(1<<i)));
+    assert.equal((html.match(/class="dose-row"/g)||[]).length,[0,1,2].filter(i=>mask&(1<<i)).length);
+    assert.ok(!html.includes('dose-inactive'));assert.ok(!html.includes('予定なし'));assert.deepEqual(s,before);
+  }
+  assert.ok(verticalMedicines([],day).includes('この日の服薬予定はありません'));
+});
+test('app flow: hidden noon remains absent while evening check works in home and calendar',async()=>{
+  const app=await appHarness(()=>now,medicationSeed());
+  const slots=()=>Array.from(app.element('content').innerHTML.matchAll(/data-slot="(\d)"/g),m=>m[1]);
+  assert.deepEqual(slots(),['0','2']);
+  await app.click({check:'m_12345678',date:day,slot:'2'});
+  assert.ok(app.element('content').innerHTML.includes('data-slot="2" aria-pressed="true"'));
+  await app.click({tab:'calendar'});assert.deepEqual(slots(),['0','2']);
+  assert.ok(app.element('content').innerHTML.includes('data-slot="2" aria-pressed="true"'));
+  assert.ok(!app.element('content').innerHTML.includes('check no-plan'));
+  await app.click({check:'m_12345678',date:day,slot:'2'});await app.confirm(true);
+  assert.ok(app.element('content').innerHTML.includes('data-slot="2" aria-pressed="false"'));
+  await app.click({tab:'home'});assert.deepEqual(slots(),['0','2']);
+  await app.click({tab:'settings'});await app.click({edit:'m_12345678'});
+  for(let i=0;i<3;i++)assert.ok(app.element('content').innerHTML.includes('name="on'+i+'"'));
+});
+test('calendar omits inactive slots for every schedule and retains original labels and indices',async()=>{
+  for(let mask=1;mask<8;mask++){
+    const app=await appHarness(()=>now,medicationSeed(mask));await app.click({tab:'calendar'});
+    const html=app.element('content').innerHTML;
+    for(let i=0;i<3;i++)assert.equal(html.includes('data-slot="'+i+'"'),!!(mask&(1<<i)));
+  }
+});
+test('hiding unscheduled slots never hides a recorded snapshot or historical prescription',()=>{
+  let s=medicationSeed();s=core.apply(s,{type:'check',revision:s.revision,id:'m_12345678',slot:2,day,viewDay:day,taken:true},now);
+  // A later schedule only needs morning; yesterday's actual evening record survives.
+  s.medicines[0].revisions.push({...structuredClone(s.medicines[0].revisions[0]),day:'2026-09-07',slots:[{on:true,qty:1,time:'08:00',remind:false},{on:false,qty:1,time:'12:00',remind:false},{on:false,qty:1,time:'20:00',remind:false}]});
+  const old=verticalMedicines(core.plans(s,day),day),next=verticalMedicines(core.plans(s,'2026-09-07'),'2026-09-07');
+  assert.ok(old.includes('data-slot="2" aria-pressed="true"'));assert.ok(!next.includes('data-slot="2"'));
+  s.medicines[0].revisions[0].slots[2].on=false;
+  assert.ok(verticalMedicines(core.plans(s,day),day).includes('data-slot="2" aria-pressed="true"'));
+});
+test('compact home retains touch-sized controls and responsive date typography',()=>{
+  const css=fs.readFileSync(new URL('./styles.css',import.meta.url),'utf8');
+  assert.ok(css.includes('font-size:clamp(2rem,9vw,2.625rem)'));assert.ok(css.includes('min-height:84px'));
+  assert.ok(css.includes('min-height:44px'));assert.ok(css.includes('width:44px;height:44px'));
+  assert.ok(!css.includes('min-height:102px'));assert.ok(!css.includes('font-size:clamp(2.5rem,12vw,3.5rem)'));
+});
+test('rose capsule icons have opaque PNGs at iPhone and PWA sizes and cache-matched version URLs',()=>{
+  const root=new URL('./',import.meta.url),html=fs.readFileSync(new URL('index.html',root),'utf8'),sw=fs.readFileSync(new URL('sw.js',root),'utf8');
+  const manifest=JSON.parse(fs.readFileSync(new URL('manifest.webmanifest',root)));
+  for(const [name,size] of [['apple-touch-icon.png',180],['icon-192.png',192],['icon-512.png',512]]){
+    const png=fs.readFileSync(new URL(name,root));assert.equal(png.subarray(1,4).toString(),'PNG');assert.equal(png.readUInt32BE(16),size);assert.equal(png.readUInt32BE(20),size);assert.equal(png[25],2);
+    assert.ok(sw.includes('./'+name+'?v=rose-1'));
+  }
+  for(const icon of manifest.icons){assert.ok(sw.includes(icon.src));assert.ok(fs.existsSync(new URL(icon.src.split('?')[0],root)));}
+  assert.ok(html.includes('sizes="180x180" href="./apple-touch-icon.png?v=rose-1"'));
+  assert.ok(fs.readFileSync(new URL('icon.svg',root),'utf8').includes('カプセルとチェック'));
 });

@@ -1,7 +1,7 @@
 const PREFIX = 'nomimashita-shell-' + self.registration.scope + '-';
-const CACHE = PREFIX + 'v3-1-name';
+const CACHE = PREFIX + 'v3-2-compact-rose';
 const SHELL = ['./','./index.html','./styles.css','./app.js','./core.js','./storage.js','./wellness.js','./medicine-view.js','./brand-mark.svg','./mascot.png',
-  './manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
+  './manifest.webmanifest','./icon.svg?v=rose-1','./icon-192.png?v=rose-1','./icon-512.png?v=rose-1','./apple-touch-icon.png?v=rose-1'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL))));
 // No skipWaiting: a new version takes over only after old app windows close.
 self.addEventListener('activate', event => event.waitUntil((async () => {

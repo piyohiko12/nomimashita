@@ -14,8 +14,10 @@ export function verticalMedicines(plans,date) {
   if(!plans.length)return '<div class="vertical-empty"><p>この日の服薬予定はありません。</p><button class="primary" data-add="1">＋ 薬を登録する</button></div>';
   return plans.map(m=>'<section class="vertical-medicine"><h2><span class="medicine-dot" aria-hidden="true"></span>'+esc(m.name)+'<span class="medicine-quantity">'+esc(quantityTitle(m))+'</span></h2><div class="dose-list">'
     +m.slots.map((slot,i)=>{
-      const content='<span class="dose-time-icon dose-time-'+i+'" aria-hidden="true"><svg viewBox="0 0 24 24">'+timeIcons[i]+'</svg></span><span class="dose-copy"><strong>'+labels[i]+'</strong><span>'+(slot.on?(slot.taken?'服用済み':'飲んだらチェック'):'予定なし')+'</span>'+(slot.on?'<small>'+slot.qty+'錠 · '+slot.time+'</small>':'')+'</span><span class="round-check" aria-hidden="true">'+(slot.on&&slot.taken?'<svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg>':'')+'</span>';
-      return slot.on?'<button class="dose-row" data-check="'+esc(m.id)+'" data-date="'+esc(date)+'" data-slot="'+i+'" aria-pressed="'+!!slot.taken+'" aria-label="'+esc(m.name)+' '+labels[i]+' '+(slot.taken?'飲んだ・チェックを外す':'飲んだと記録')+'">'+content+'</button>':'<div class="dose-row dose-inactive" aria-label="'+labels[i]+' 予定なし">'+content+'</div>';
+      // Keep the original slot index: hiding noon must not turn evening into noon.
+      if(!slot.on)return '';
+      const content='<span class="dose-time-icon dose-time-'+i+'" aria-hidden="true"><svg viewBox="0 0 24 24">'+timeIcons[i]+'</svg></span><span class="dose-copy"><strong>'+labels[i]+'</strong><span>'+(slot.taken?'服用済み':'飲んだらチェック')+'</span><small>'+slot.qty+'錠 · '+slot.time+'</small></span><span class="round-check" aria-hidden="true">'+(slot.taken?'<svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg>':'')+'</span>';
+      return '<button class="dose-row" data-check="'+esc(m.id)+'" data-date="'+esc(date)+'" data-slot="'+i+'" aria-pressed="'+!!slot.taken+'" aria-label="'+esc(m.name)+' '+labels[i]+' '+(slot.taken?'飲んだ・チェックを外す':'飲んだと記録')+'">'+content+'</button>';
     }).join('')+'</div>'+(m.note?'<p class="note">'+esc(m.note)+'</p>':'')+'</section>').join('');
 }
 function quantityTitle(m) {
