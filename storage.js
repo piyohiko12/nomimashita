@@ -1,7 +1,7 @@
 /** Local-only persistence. No network requests or account credentials. */
 export function validateBackup(input, core, now = new Date().toISOString()) {
   // Old exports and the existing IndexedDB name stay compatible after the rename.
-  const data = input && ['のみました','ここちログ','お薬記録'].includes(input.app) ? input.state : input;
+  const data = input && ['のみました','ここちログ','お薬記録','おくすり記録'].includes(input.app) ? input.state : input;
   const fail = () => { throw new Error('バックアップの内容や形式が正しくありません。記録は変更していません。'); };
   const object = v => !!v && typeof v === 'object' && !Array.isArray(v);
   const time = v => typeof v === 'string' && v.length <= 40 && Number.isFinite(Date.parse(v));

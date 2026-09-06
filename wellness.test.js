@@ -54,7 +54,7 @@ test('version 1 migration preserves medicines, checks and theme; old exports sti
   assert.equal(migrated.version,3);assert.deepEqual(migrated.wellness,{});assert.deepEqual(migrated.medicines,old.medicines);assert.deepEqual(migrated.records,old.records);assert.deepEqual(migrated.settings,old.settings);assert.equal(old.version,1);assert.equal(old.wellness,undefined);
 });
 test('new backups retain wellness and old or new wrapper labels can be read',()=>{
-  const state=record(core.initial(now));for(const app of ['お薬記録','ここちログ','のみました'])assert.deepEqual(validateBackup({app,state},core,now),state);
+  const state=record(core.initial(now));for(const app of ['おくすり記録','お薬記録','ここちログ','のみました'])assert.deepEqual(validateBackup({app,state},core,now),state);
   assert.deepEqual(validateBackup(state,core,now),state);
 });
 test('malformed wellness backups fail without quietly discarding entries',()=>{
@@ -77,9 +77,9 @@ test('functional faces, radios, symptom grid and memo are accessible and escape 
 test('name and PWA identity preserve existing installation and storage',()=>{
   const source=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8'),html=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
   const manifest=JSON.parse(fs.readFileSync(new URL('./manifest.webmanifest',import.meta.url)));
-  assert.equal(manifest.short_name,'お薬記録');assert.equal(manifest.id,'./');assert.equal(manifest.start_url,'./');assert.ok(html.includes('お薬記録'));assert.ok(!source.includes('class="brand">のみました'));
+  assert.equal(manifest.short_name,'おくすり記録');assert.equal(manifest.id,'./');assert.equal(manifest.start_url,'./');assert.ok(html.includes('おくすり記録'));assert.ok(!source.includes('class="brand">のみました'));
   const store=new LocalStore(core);assert.equal(store.dbName,'nomimashita-v1:/');
-  const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');assert.ok(sw.includes("'v3-coral-bowel'"));for(const asset of ['wellness.js','medicine-view.js','brand-mark.svg'])assert.ok(sw.includes("'./"+asset+"'"));
+  const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');assert.ok(sw.includes("'v3-1-name'"));for(const asset of ['wellness.js','medicine-view.js','brand-mark.svg'])assert.ok(sw.includes("'./"+asset+"'"));
 });
 
 // Exercise the real application event handlers without a browser or personal data.
@@ -98,7 +98,7 @@ async function appHarness(clock=()=>now){
   return {element,async click(dataset){events.get('click')({target:{closest:()=>({dataset,disabled:false})}});await new Promise(resolve=>setImmediate(resolve));},async submit(values){events.get('submit')({target:{id:'wellness-editor',values},preventDefault(){}});await new Promise(resolve=>setImmediate(resolve));},async confirm(yes){element(yes?'confirm-yes':'confirm-no').listeners.click();await new Promise(resolve=>setImmediate(resolve));}};
 }
 test('app flow: home banner → selection entry → calendar face and detail → edit → delete',async()=>{
-  const app=await appHarness();assert.ok(app.element('heading').innerHTML.includes('お薬記録'));assert.ok(app.element('content').innerHTML.includes('体調の記録をする'));
+  const app=await appHarness();assert.ok(app.element('heading').innerHTML.includes('おくすり記録'));assert.ok(app.element('content').innerHTML.includes('体調の記録をする'));
   await app.click({wellnessEdit:day});assert.ok(app.element('content').innerHTML.includes('wellness-editor'));
   await app.submit(sample());assert.ok(app.element('content').innerHTML.includes('今日の体調 · 不調'));
   await app.click({tab:'calendar'});let html=app.element('content').innerHTML;assert.ok(html.includes('体調 不調・服薬 予定なし'));assert.ok(html.includes('朝から頭が重い。'));assert.ok(html.includes('data-mood="low"'));
@@ -140,7 +140,7 @@ test('failed persistence never reports saved or replaces previous records',async
   await assert.rejects(store.request({type:'wellness',revision:prior.revision,day,viewDay:day,wellness:{mood:'great',symptoms:[],note:''}}),/容量不足/);assert.deepEqual(db.stored,prior);
 });
 test('bowel records distinguish yes, no and unrecorded and validate all input',()=>{
-  for(const option of BOWEL_OPTIONS){const s=record(core.initial(now),{...sample(),bowel:option.id});assert.equal(s.wellness[day].bowel,option.id);assert.ok(wellnessDetails(s.wellness[day],day).includes(bowelLabel(option.id)));assert.deepEqual(validateBackup({app:'お薬記録',state:s},core,now),s);}
+  for(const option of BOWEL_OPTIONS){const s=record(core.initial(now),{...sample(),bowel:option.id});assert.equal(s.wellness[day].bowel,option.id);assert.ok(wellnessDetails(s.wellness[day],day).includes(bowelLabel(option.id)));assert.deepEqual(validateBackup({app:'おくすり記録',state:s},core,now),s);}
   const legacy=sample();delete legacy.bowel;assert.equal(validateWellness(legacy).bowel,'unrecorded');
   for(const bowel of [null,true,false,'','unknown','__proto__'])assert.throws(()=>validateWellness({...sample(),bowel}));
   const corrupt=record(core.initial(now));delete corrupt.wellness[day].bowel;assert.throws(()=>validateBackup(corrupt,core,now));

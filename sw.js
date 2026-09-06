@@ -1,5 +1,5 @@
 const PREFIX = 'nomimashita-shell-' + self.registration.scope + '-';
-const CACHE = PREFIX + 'v3-coral-bowel';
+const CACHE = PREFIX + 'v3-1-name';
 const SHELL = ['./','./index.html','./styles.css','./app.js','./core.js','./storage.js','./wellness.js','./medicine-view.js','./brand-mark.svg','./mascot.png',
   './manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL))));
