@@ -1,3 +1,5 @@
+import { validateWellness } from './wellness.js';
+
 export function createCore() {
   var names = ['朝', '昼', '晩'];
   var clone = function (v) { return JSON.parse(JSON.stringify(v)); };
@@ -5,8 +7,8 @@ export function createCore() {
   // Fixed Asia/Tokyo day boundary: UTC+9 minus five hours, independent of script TZ.
   function day(iso) { return new Date(new Date(iso).getTime() + 4 * 3600000).toISOString().slice(0, 10); }
   function initial(now) {
-    return { version: 1, revision: 0, startedDay: day(now), updatedAt: now,
-      settings: { theme: 'simple' }, medicines: [], records: {} };
+    return { version: 2, revision: 0, startedDay: day(now), updatedAt: now,
+      settings: { theme: 'simple' }, medicines: [], records: {}, wellness: {} };
   }
   function revision(m, date) {
     return m.revisions.filter(function (r) { return r.day <= date; }).slice(-1)[0] || null;
@@ -63,6 +65,8 @@ export function createCore() {
   function apply(previous, request, now) {
     if (request.revision !== previous.revision) fail('別の画面で記録が更新されています。「再読み込み」で最新の記録を確認してください。');
     var state = clone(previous), today = day(now);
+    state.version = 2;
+    state.wellness = state.wellness || {};
     if (request.type === 'theme') {
       if (['simple', 'soft', 'character'].indexOf(request.theme) < 0) fail('テーマを選び直してください。');
       state.settings.theme = request.theme;
@@ -77,6 +81,11 @@ export function createCore() {
       validated.day = today;
       target.revisions = target.revisions.filter(function (r) { return r.day !== today; });
       target.revisions.push(validated);
+    } else if (request.type === 'wellness' || request.type === 'wellness-delete') {
+      if (request.viewDay !== today) fail('朝5時を過ぎました。再読み込みして日付を確認してください。');
+      if (!validDay(request.day) || request.day < state.startedDay || request.day > today) fail('記録できる日付ではありません。');
+      if (request.type === 'wellness-delete') delete state.wellness[request.day];
+      else state.wellness[request.day] = Object.assign(validateWellness(request.wellness), {updatedAt: now});
     } else if (request.type === 'check') {
       if (request.viewDay !== today) fail('日付が変わりました。再読み込みしてからチェックしてください。');
       if (!validDay(request.day) || request.day < state.startedDay || request.day > today) fail('記録できる日付ではありません。');
@@ -100,5 +109,5 @@ export function createCore() {
     return state;
   }
   return { day: day, initial: initial, revision: revision, plans: plans, title: title,
-    summary: summary, apply: apply, validateMedicine: validateMedicine, validDay: validDay };
+    summary: summary, apply: apply, validateMedicine: validateMedicine, validateWellness: validateWellness, validDay: validDay };
 }

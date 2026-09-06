@@ -1,28 +1,29 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <title>のみました — 服薬チェック</title>
+  <meta charset="utf-8">
+  <title>ここちログ — お薬と体調の記録</title>
+  <meta name="description" content="お薬のチェックと毎日の体調を、ひとつのカレンダーに。記録はこの端末の中だけに保存します。">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#176b50">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="のみました">
+  <meta name="apple-mobile-web-app-title" content="ここちログ">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
-  <meta charset="utf-8">
   <meta name="color-scheme" content="light">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body data-theme="simple">
   <div id="app">
-    <header id="heading"><div><div class="brand">のみました</div><h1>ホーム</h1></div></header>
+    <header id="heading"><div class="heading-copy"><div class="brand-lockup"><img class="brand-mark" src="./icon.svg" alt=""><span class="brand-name">ここち<span>ログ</span></span></div><h1>今日の記録</h1></div></header>
     <div id="message" class="message" role="status" aria-live="polite">記録を読み込んでいます…</div>
     <main id="content"><section class="section empty"><p>この端末の記録を読み込みます。</p><noscript>JavaScriptを有効にして開いてください。</noscript></section></main>
     <div id="saved" class="saved"></div><div id="offline" class="saved" role="status"></div><nav id="nav" aria-label="メイン画面"></nav>
   </div>
-  <dialog id="confirm"><h2 id="confirm-title">記録の変更</h2><p id="confirm-text"></p><div class="row"><button id="confirm-no">キャンセル</button><button class="primary" id="confirm-yes">変更する</button></div></dialog>
+  <dialog id="confirm" aria-labelledby="confirm-title" aria-describedby="confirm-text"><h2 id="confirm-title">記録の変更</h2><p id="confirm-text"></p><div class="row"><button id="confirm-no">キャンセル</button><button class="primary" id="confirm-yes">変更する</button></div></dialog>
   <script type="module" src="./app.js"></script>
 </body>
 </html>
