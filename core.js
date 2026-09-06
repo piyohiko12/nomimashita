@@ -68,7 +68,7 @@ export function createCore() {
     state.version = 3;
     state.wellness = state.wellness || {};
     if (request.type === 'theme') {
-      if (['coral', 'simple', 'soft', 'character'].indexOf(request.theme) < 0) fail('テーマを選び直してください。');
+      if (['coral', 'simple', 'soft'].indexOf(request.theme) < 0) fail('テーマを選び直してください。');
       state.settings.theme = request.theme;
     } else if (request.type === 'medicine') {
       if (request.day !== today) fail('朝5時を過ぎました。再読み込みしてから保存してください。');

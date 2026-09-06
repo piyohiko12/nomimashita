@@ -46,12 +46,12 @@ test('deleting wellness affects only the selected day, never medication checks',
   s=core.apply(s,{type:'wellness-delete',revision:s.revision,day,viewDay:'2026-09-07'},tomorrow);
   assert.equal(s.wellness[day],undefined);assert.equal(s.wellness['2026-09-07'].mood,'good');assert.deepEqual(s.records,before);
 });
-test('version 1 migration preserves medicines, checks and theme; old exports still work',()=>{
-  const old=core.initial(now);old.version=1;delete old.wellness;old.settings.theme='character';
+test('version 1 migration preserves medicines and checks while retiring the old theme',()=>{
+  const old=core.initial(now);old.version=1;delete old.wellness;old.settings.theme='retired-theme';
   old.medicines=[{id:'m_12345678',revisions:[{day,name:'既存の薬',note:'そのまま残す',active:true,slots:[{on:true,qty:1,time:'08:00',remind:true},{on:false,qty:1,time:'12:00',remind:false},{on:true,qty:2,time:'20:00',remind:false}]}]}];
   old.records[day]={m_12345678:{0:{name:'既存の薬',qty:1,time:'08:00',recordedAt:now,retrospective:false}}};
   const migrated=validateBackup({app:'のみました',state:old},core,now);
-  assert.equal(migrated.version,3);assert.deepEqual(migrated.wellness,{});assert.deepEqual(migrated.medicines,old.medicines);assert.deepEqual(migrated.records,old.records);assert.deepEqual(migrated.settings,old.settings);assert.equal(old.version,1);assert.equal(old.wellness,undefined);
+  assert.equal(migrated.version,3);assert.deepEqual(migrated.wellness,{});assert.deepEqual(migrated.medicines,old.medicines);assert.deepEqual(migrated.records,old.records);assert.equal(migrated.settings.theme,'coral');assert.equal(old.settings.theme,'retired-theme');assert.equal(old.version,1);assert.equal(old.wellness,undefined);
 });
 test('new backups retain wellness and old or new wrapper labels can be read',()=>{
   const state=record(core.initial(now));for(const app of ['おくすり記録','お薬記録','ここちログ','のみました'])assert.deepEqual(validateBackup({app,state},core,now),state);
@@ -81,7 +81,7 @@ test('name and PWA identity preserve existing installation and storage',()=>{
   const manifest=JSON.parse(fs.readFileSync(new URL('./manifest.webmanifest',import.meta.url)));
   assert.equal(manifest.short_name,'おくすり記録');assert.equal(manifest.id,'./');assert.equal(manifest.start_url,'./');assert.ok(html.includes('おくすり記録'));assert.ok(!source.includes('class="brand">のみました'));
   const store=new LocalStore(core);assert.equal(store.dbName,'nomimashita-v1:/');
-  const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');assert.ok(sw.includes("'v3-3-calendar-dots'"));for(const asset of ['wellness.js','medicine-view.js','brand-mark.svg'])assert.ok(sw.includes("'./"+asset+"'"));
+  const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');assert.ok(sw.includes("'v3-4-coral-clean'"));for(const asset of ['wellness.js','medicine-view.js','brand-mark.svg'])assert.ok(sw.includes("'./"+asset+"'"));
 });
 
 // Exercise the real application event handlers without a browser or personal data.
@@ -147,14 +147,14 @@ test('bowel records distinguish yes, no and unrecorded and validate all input',(
   for(const bowel of [null,true,false,'','unknown','__proto__'])assert.throws(()=>validateWellness({...sample(),bowel}));
   const corrupt=record(core.initial(now));delete corrupt.wellness[day].bowel;assert.throws(()=>validateBackup(corrupt,core,now));
 });
-test('v2 migration preserves mood, symptoms, memo and theme without inventing bowel results',async()=>{
-  const old=record(core.initial(now));old.version=2;old.settings.theme='character';delete old.wellness[day].bowel;
-  const migrated=validateBackup({app:'ここちログ',state:old},core,now);assert.equal(migrated.version,3);assert.equal(migrated.wellness[day].bowel,'unrecorded');assert.equal(migrated.settings.theme,'character');assert.deepEqual(migrated.wellness[day].symptoms,old.wellness[day].symptoms);assert.equal(migrated.wellness[day].note,old.wellness[day].note);
+test('v2 migration preserves wellness and changes the retired theme to coral',async()=>{
+  const old=record(core.initial(now));old.version=2;old.settings.theme='retired-theme';delete old.wellness[day].bowel;
+  const migrated=validateBackup({app:'ここちログ',state:old},core,now);assert.equal(migrated.version,3);assert.equal(migrated.wellness[day].bowel,'unrecorded');assert.equal(migrated.settings.theme,'coral');assert.deepEqual(migrated.wellness[day].symptoms,old.wellness[day].symptoms);assert.equal(migrated.wellness[day].note,old.wellness[day].note);
   const db=persistenceDouble(old);await new LocalStore(core,{factory:db.factory,clock:()=>now}).request({type:'get'});assert.deepEqual(db.stored,migrated);
 });
-test('coral is a fourth theme and does not replace a saved preference during migration',()=>{
+test('coral is the default among three supported themes',()=>{
   assert.equal(core.initial(now).settings.theme,'coral');
-  for(const theme of ['coral','simple','soft','character']){const s=core.apply(core.initial(now),{type:'theme',revision:0,theme},now);assert.equal(validateBackup(s,core,now).settings.theme,theme);}
+  for(const theme of ['coral','simple','soft']){const s=core.apply(core.initial(now),{type:'theme',revision:0,theme},now);assert.equal(validateBackup(s,core,now).settings.theme,theme);}
   const old=core.initial(now);old.version=2;old.settings.theme='soft';assert.equal(validateBackup(old,core,now).settings.theme,'soft');
 });
 test('reference home has a large correct JST date and vertical medication rows',()=>{
@@ -169,7 +169,7 @@ test('app flow: selected bowel result persists in form and calendar and can be c
   await app.click({tab:'calendar'});assert.ok(app.element('content').innerHTML.includes('トイレ（排便）</h3><strong>でた'));
   await app.click({wellnessEdit:day});assert.ok(app.element('content').innerHTML.includes('name="bowel" value="yes" checked'));
   await app.submit({...sample(),bowel:'no'});assert.ok(app.element('content').innerHTML.includes('トイレ（排便）</h3><strong>でていない'));
-  await app.click({tab:'settings'});await app.click({page:'themes'});assert.equal((app.element('content').innerHTML.match(/data-theme-option=/g)||[]).length,4);await app.click({themeOption:'coral'});assert.ok(app.element('content').innerHTML.includes('やさしいコーラル'));
+  await app.click({tab:'settings'});await app.click({page:'themes'});assert.equal((app.element('content').innerHTML.match(/data-theme-option=/g)||[]).length,3);await app.click({themeOption:'coral'});assert.ok(app.element('content').innerHTML.includes('やさしいコーラル'));
 });
 test('bowel belongs to one day and is retained in backup after midnight and 05:00',()=>{
   let s=record(core.initial(now),{...sample(),bowel:'yes'});assert.equal(s.wellness[core.day('2026-09-06T16:00:00Z')].bowel,'yes');assert.equal(s.wellness[core.day(tomorrow)],undefined);

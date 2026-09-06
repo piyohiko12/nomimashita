@@ -8,7 +8,7 @@ export function validateBackup(input, core, now = new Date().toISOString()) {
   const today = core.day(now);
   if (!object(data) || ![1,2,3].includes(data.version) || !Number.isSafeInteger(data.revision) || data.revision < 0
     || !core.validDay(data.startedDay) || data.startedDay > today || !time(data.updatedAt)
-    || !object(data.settings) || !['coral','simple','soft','character'].includes(data.settings.theme)
+    || !object(data.settings) || typeof data.settings.theme !== 'string' || data.settings.theme.length > 30
     || !Array.isArray(data.medicines) || data.medicines.length > 100 || !object(data.records)) fail();
   const ids = new Set();
   const medicines = data.medicines.map(m => {
@@ -55,7 +55,7 @@ export function validateBackup(input, core, now = new Date().toISOString()) {
   // Version 3 stops old cached clients from dropping bowel records or the coral theme.
   // Whitelist fields instead of trusting arbitrary JSON keys from imported files.
   return {version:3,revision:data.revision,startedDay:data.startedDay,updatedAt:data.updatedAt,
-    settings:{theme:data.settings.theme},medicines,records,wellness};
+    settings:{theme:['coral','simple','soft'].includes(data.settings.theme) ? data.settings.theme : 'coral'},medicines,records,wellness};
 }
 
 export class LocalStore {
@@ -110,7 +110,8 @@ export class LocalStore {
           const current = read.result === undefined ? this.core.initial(now) : validateBackup(read.result, this.core, now);
           const updated = this.change(current, request, now);
           result = {state:updated,now,today:this.core.day(now)};
-          if (read.result === undefined || read.result.version !== updated.version || request.type !== 'get') storage.put(updated, 'state');
+          if (read.result === undefined || read.result.version !== updated.version
+            || read.result.settings?.theme !== updated.settings.theme || request.type !== 'get') storage.put(updated, 'state');
         } catch (e) { failure = e; tx.abort(); }
       };
       tx.oncomplete = () => resolve(result);

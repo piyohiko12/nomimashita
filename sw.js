@@ -1,9 +1,11 @@
 const PREFIX = 'nomimashita-shell-' + self.registration.scope + '-';
-const CACHE = PREFIX + 'v3-3-calendar-dots';
-const SHELL = ['./','./index.html','./styles.css','./app.js','./core.js','./storage.js','./wellness.js','./medicine-view.js','./brand-mark.svg','./mascot.png',
+const CACHE = PREFIX + 'v3-4-coral-clean';
+const SHELL = ['./','./index.html','./styles.css','./app.js','./core.js','./storage.js','./wellness.js','./medicine-view.js','./brand-mark.svg',
   './manifest.webmanifest','./icon.svg?v=rose-1','./icon-192.png?v=rose-1','./icon-512.png?v=rose-1','./apple-touch-icon.png?v=rose-1'];
-self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL))));
-// No skipWaiting: a new version takes over only after old app windows close.
+self.addEventListener('install', event => event.waitUntil(
+  caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting())
+));
+// The new worker activates only after its complete app shell has been cached.
 self.addEventListener('activate', event => event.waitUntil((async () => {
   for (const key of await caches.keys()) if (key.startsWith(PREFIX) && key !== CACHE) await caches.delete(key);
   await self.clients.claim();
