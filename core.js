@@ -7,7 +7,7 @@ export function createCore() {
   // Fixed Asia/Tokyo day boundary: UTC+9 minus five hours, independent of script TZ.
   function day(iso) { return new Date(new Date(iso).getTime() + 4 * 3600000).toISOString().slice(0, 10); }
   function initial(now) {
-    return { version: 3, revision: 0, startedDay: day(now), updatedAt: now,
+    return { version: 4, revision: 0, startedDay: day(now), updatedAt: now,
       settings: { theme: 'coral' }, medicines: [], records: {}, wellness: {} };
   }
   function revision(m, date) {
@@ -17,13 +17,13 @@ export function createCore() {
     if (date < state.startedDay) return [];
     var records = state.records[date] || {};
     return state.medicines.map(function (m) {
-      var r = revision(m, date), checked = records[m.id] || {};
-      if ((!r || !r.active) && !Object.keys(checked).length) return null;
+      var r = revision(m, date), checked = records[m.id] || {}, deleted = m.deletedDay && date >= m.deletedDay;
+      if ((deleted || !r || !r.active) && !Object.keys(checked).length) return null;
       var slots = names.map(function (_, i) {
         var snapshot = checked[i];
         if (snapshot) return { on: true, qty: snapshot.qty, time: snapshot.time, taken: true };
         var s = r && r.slots[i];
-        return s && r.active && s.on ? { on: true, qty: s.qty, time: s.time, taken: false } : { on: false };
+        return !deleted && s && r.active && s.on ? { on: true, qty: s.qty, time: s.time, taken: false } : { on: false };
       });
       var first = Object.keys(checked)[0];
       return { id: m.id, name: first !== undefined ? checked[first].name : r.name,
@@ -65,7 +65,7 @@ export function createCore() {
   function apply(previous, request, now) {
     if (request.revision !== previous.revision) fail('別の画面で記録が更新されています。「再読み込み」で最新の記録を確認してください。');
     var state = clone(previous), today = day(now);
-    state.version = 3;
+    state.version = 4;
     state.wellness = state.wellness || {};
     if (request.type === 'theme') {
       if (['coral', 'simple', 'soft'].indexOf(request.theme) < 0) fail('テーマを選び直してください。');
@@ -77,10 +77,16 @@ export function createCore() {
       if (!target) {
         if (state.medicines.length >= 100) fail('登録できる薬は100件までです。');
         target = { id: request.id, revisions: [] }; state.medicines.push(target);
-      }
+      } else if (target.deletedDay && target.deletedDay <= today) fail('この薬は削除されています。');
       validated.day = today;
       target.revisions = target.revisions.filter(function (r) { return r.day !== today; });
       target.revisions.push(validated);
+    } else if (request.type === 'medicine-delete') {
+      if (request.day !== today) fail('朝5時を過ぎました。再読み込みしてから削除してください。');
+      if (typeof request.id !== 'string' || !/^m_[a-zA-Z0-9-]{8,70}$/.test(request.id)) fail('薬のIDが正しくありません。');
+      var deletedTarget = state.medicines.find(function (m) { return m.id === request.id; });
+      if (!deletedTarget || (deletedTarget.deletedDay && deletedTarget.deletedDay <= today)) fail('この薬はすでに削除されています。');
+      deletedTarget.deletedDay = today;
     } else if (request.type === 'wellness' || request.type === 'wellness-delete') {
       if (request.viewDay !== today) fail('朝5時を過ぎました。再読み込みして日付を確認してください。');
       if (!validDay(request.day) || request.day < state.startedDay || request.day > today) fail('記録できる日付ではありません。');

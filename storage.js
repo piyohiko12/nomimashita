@@ -6,7 +6,7 @@ export function validateBackup(input, core, now = new Date().toISOString()) {
   const object = v => !!v && typeof v === 'object' && !Array.isArray(v);
   const time = v => typeof v === 'string' && v.length <= 40 && Number.isFinite(Date.parse(v));
   const today = core.day(now);
-  if (!object(data) || ![1,2,3].includes(data.version) || !Number.isSafeInteger(data.revision) || data.revision < 0
+  if (!object(data) || ![1,2,3,4].includes(data.version) || !Number.isSafeInteger(data.revision) || data.revision < 0
     || !core.validDay(data.startedDay) || data.startedDay > today || !time(data.updatedAt)
     || !object(data.settings) || typeof data.settings.theme !== 'string' || data.settings.theme.length > 30
     || !Array.isArray(data.medicines) || data.medicines.length > 100 || !object(data.records)) fail();
@@ -21,7 +21,12 @@ export function validateBackup(input, core, now = new Date().toISOString()) {
       previous = r.day;
       return { ...core.validateMedicine(r), day: r.day };
     });
-    return { id: m.id, revisions };
+    let deletedDay;
+    if (m.deletedDay !== undefined) {
+      if (!core.validDay(m.deletedDay) || m.deletedDay < revisions[0].day || m.deletedDay > today) fail();
+      deletedDay = m.deletedDay;
+    }
+    return { id: m.id, revisions, ...(deletedDay ? {deletedDay} : {}) };
   });
   const records = {};
   if (Object.keys(data.records).length > 30000) fail();
@@ -48,13 +53,13 @@ export function validateBackup(input, core, now = new Date().toISOString()) {
     if (!object(data.wellness) || Object.keys(data.wellness).length > 30000) fail();
     for (const [date, entry] of Object.entries(data.wellness)) {
       if (!core.validDay(date) || date < data.startedDay || date > today || !object(entry) || !time(entry.updatedAt)) fail();
-      if (data.version === 3 && entry.bowel === undefined) fail();
+      if (data.version >= 3 && entry.bowel === undefined) fail();
       wellness[date] = {...core.validateWellness(entry),updatedAt:entry.updatedAt};
     }
   }
-  // Version 3 stops old cached clients from dropping bowel records or the coral theme.
+  // Version 4 preserves medicine deletion dates while keeping historical dose records.
   // Whitelist fields instead of trusting arbitrary JSON keys from imported files.
-  return {version:3,revision:data.revision,startedDay:data.startedDay,updatedAt:data.updatedAt,
+  return {version:4,revision:data.revision,startedDay:data.startedDay,updatedAt:data.updatedAt,
     settings:{theme:['coral','simple','soft'].includes(data.settings.theme) ? data.settings.theme : 'coral'},medicines,records,wellness};
 }
 

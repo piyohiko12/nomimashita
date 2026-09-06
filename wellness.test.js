@@ -13,7 +13,7 @@ const record=(state,value=sample(),date=day,clock=now)=>core.apply(state,{type:'
 
 test('wellness can be recorded without registering medication',()=>{
   const initial=core.initial(now), saved=record(initial);
-  assert.equal(saved.wellness[day].mood,'low');assert.equal(saved.version,3);
+  assert.equal(saved.wellness[day].mood,'low');assert.equal(saved.version,4);
   assert.deepEqual(saved.medicines,[]);assert.deepEqual(initial.wellness,{});
   assert.equal(saved.wellness[day].updatedAt,now);
 });
@@ -51,7 +51,7 @@ test('version 1 migration preserves medicines and checks while retiring the old 
   old.medicines=[{id:'m_12345678',revisions:[{day,name:'既存の薬',note:'そのまま残す',active:true,slots:[{on:true,qty:1,time:'08:00',remind:true},{on:false,qty:1,time:'12:00',remind:false},{on:true,qty:2,time:'20:00',remind:false}]}]}];
   old.records[day]={m_12345678:{0:{name:'既存の薬',qty:1,time:'08:00',recordedAt:now,retrospective:false}}};
   const migrated=validateBackup({app:'のみました',state:old},core,now);
-  assert.equal(migrated.version,3);assert.deepEqual(migrated.wellness,{});assert.deepEqual(migrated.medicines,old.medicines);assert.deepEqual(migrated.records,old.records);assert.equal(migrated.settings.theme,'coral');assert.equal(old.settings.theme,'retired-theme');assert.equal(old.version,1);assert.equal(old.wellness,undefined);
+  assert.equal(migrated.version,4);assert.deepEqual(migrated.wellness,{});assert.deepEqual(migrated.medicines,old.medicines);assert.deepEqual(migrated.records,old.records);assert.equal(migrated.settings.theme,'coral');assert.equal(old.settings.theme,'retired-theme');assert.equal(old.version,1);assert.equal(old.wellness,undefined);
 });
 test('new backups retain wellness and old or new wrapper labels can be read',()=>{
   const state=record(core.initial(now));for(const app of ['おくすり記録','お薬記録','ここちログ','のみました'])assert.deepEqual(validateBackup({app,state},core,now),state);
@@ -81,7 +81,7 @@ test('name and PWA identity preserve existing installation and storage',()=>{
   const manifest=JSON.parse(fs.readFileSync(new URL('./manifest.webmanifest',import.meta.url)));
   assert.equal(manifest.short_name,'おくすり記録');assert.equal(manifest.id,'./');assert.equal(manifest.start_url,'./');assert.ok(html.includes('おくすり記録'));assert.ok(!source.includes('class="brand">のみました'));
   const store=new LocalStore(core);assert.equal(store.dbName,'nomimashita-v1:/');
-  const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');assert.ok(sw.includes("'v3-4-coral-clean'"));for(const asset of ['wellness.js','medicine-view.js','brand-mark.svg'])assert.ok(sw.includes("'./"+asset+"'"));
+  const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');assert.ok(sw.includes("'v4-1-medicine-delete'"));for(const asset of ['wellness.js','medicine-view.js','brand-mark.svg'])assert.ok(sw.includes("'./"+asset+"'"));
 });
 
 // Exercise the real application event handlers without a browser or personal data.
@@ -133,7 +133,7 @@ function persistenceDouble(seed,{rejectWrites=false}={}) {
 test('persistence path upgrades v1 on read and keeps wellness in a new store instance',async()=>{
   const old=core.initial(now);old.version=1;delete old.wellness;old.settings.theme='soft';
   const db=persistenceDouble(old),store=new LocalStore(core,{factory:db.factory,clock:()=>now});const first=await store.request({type:'get'});
-  assert.equal(db.stored.version,3);assert.equal(db.puts,1);assert.equal(db.stored.settings.theme,'soft');
+  assert.equal(db.stored.version,4);assert.equal(db.puts,1);assert.equal(db.stored.settings.theme,'soft');
   await store.request({type:'wellness',revision:first.state.revision,day,viewDay:day,wellness:sample()});
   const reopened=await new LocalStore(core,{factory:db.factory,clock:()=>now}).request({type:'get'});assert.deepEqual(reopened.state.wellness[day],{...sample(),updatedAt:now});assert.equal(db.puts,2);
 });
@@ -149,7 +149,7 @@ test('bowel records distinguish yes, no and unrecorded and validate all input',(
 });
 test('v2 migration preserves wellness and changes the retired theme to coral',async()=>{
   const old=record(core.initial(now));old.version=2;old.settings.theme='retired-theme';delete old.wellness[day].bowel;
-  const migrated=validateBackup({app:'ここちログ',state:old},core,now);assert.equal(migrated.version,3);assert.equal(migrated.wellness[day].bowel,'unrecorded');assert.equal(migrated.settings.theme,'coral');assert.deepEqual(migrated.wellness[day].symptoms,old.wellness[day].symptoms);assert.equal(migrated.wellness[day].note,old.wellness[day].note);
+  const migrated=validateBackup({app:'ここちログ',state:old},core,now);assert.equal(migrated.version,4);assert.equal(migrated.wellness[day].bowel,'unrecorded');assert.equal(migrated.settings.theme,'coral');assert.deepEqual(migrated.wellness[day].symptoms,old.wellness[day].symptoms);assert.equal(migrated.wellness[day].note,old.wellness[day].note);
   const db=persistenceDouble(old);await new LocalStore(core,{factory:db.factory,clock:()=>now}).request({type:'get'});assert.deepEqual(db.stored,migrated);
 });
 test('coral is the default among three supported themes',()=>{
@@ -227,6 +227,14 @@ test('app flow: hidden noon remains absent while evening check works in home and
   await app.click({tab:'home'});assert.deepEqual(slots(),['0','2']);
   await app.click({tab:'settings'});await app.click({edit:'m_12345678'});
   for(let i=0;i<3;i++)assert.ok(app.element('content').innerHTML.includes('name="on'+i+'"'));
+});
+test('app flow: an existing medicine can be deleted after confirmation',async()=>{
+  const app=await appHarness(()=>now,medicationSeed());await app.click({tab:'settings'});await app.click({page:'medicines'});await app.click({edit:'m_12345678'});
+  assert.ok(app.element('content').innerHTML.includes('data-medicine-delete="m_12345678"'));
+  await app.click({medicineDelete:'m_12345678'});assert.equal(app.element('confirm').open,true);assert.ok(app.element('confirm-text').textContent.includes('過去と今日の服用済み記録は残ります'));await app.confirm(false);
+  assert.ok(app.element('content').innerHTML.includes('data-medicine-delete="m_12345678"'));
+  await app.click({medicineDelete:'m_12345678'});await app.confirm(true);assert.ok(app.element('content').innerHTML.includes('まず「薬の登録」で薬を追加してください。'));
+  await app.click({tab:'home'});assert.ok(app.element('content').innerHTML.includes('この日の服薬予定はありません。'));
 });
 test('calendar omits inactive slots for every schedule and retains original labels and indices',async()=>{
   for(let mask=1;mask<8;mask++){
