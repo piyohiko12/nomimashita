@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import { createCore } from './core.js';
 import { LocalStore, validateBackup } from './storage.js';
 import { MOODS, SYMPTOMS, BOWEL_OPTIONS, bowelLabel, validateWellness, faceIcon, moodLabel, wellnessBanner, wellnessDetails, wellnessEditor } from './wellness.js';
-import { largeDate, verticalMedicines } from './medicine-view.js';
+import { largeDate, verticalMedicines, calendarDoseDots } from './medicine-view.js';
 
 const core=createCore(), now='2026-09-06T03:00:00Z', tomorrow='2026-09-06T20:00:00Z', day=core.day(now);
 const sample=()=>({mood:'low',symptoms:['headache','fatigue'],note:'朝から頭が重い。\n午後は少し落ち着いた。',bowel:'unrecorded'});
@@ -71,6 +71,8 @@ test('functional faces, radios, symptom grid and memo are accessible and escape 
   const html=wellnessEditor({day,mood:'low',symptoms:['headache'],note:'<img src=x onerror=alert(1)>',existing:true});
   assert.equal((html.match(/name="mood"/g)||[]).length,5);assert.equal((html.match(/name="symptoms"/g)||[]).length,SYMPTOMS.length);assert.equal((html.match(/name="bowel"/g)||[]).length,3);
   assert.ok(html.includes('value="low" checked required'));assert.ok(html.includes('maxlength="1000"'));assert.ok(!html.includes('<img src=x'));
+  const bowelBlock=html.match(/<div class="bowel-options">([\s\S]*?)<\/div><\/fieldset>/)[1];
+  assert.ok(bowelBlock.includes('>でた</span>'));assert.ok(bowelBlock.includes('>でていない</span>'));assert.ok(!bowelBlock.includes('<b'));
   const detail=wellnessDetails({...sample(),note:'<script>bad</script>\nメモ'},day);assert.ok(detail.includes('&lt;script&gt;'));assert.ok(detail.includes('頭痛'));assert.ok(detail.includes('編集する'));
   assert.ok(wellnessDetails(null,day).includes('まだ記録されていません'));assert.ok(wellnessBanner(null,day).includes('体調の記録をする'));
 });
@@ -79,7 +81,7 @@ test('name and PWA identity preserve existing installation and storage',()=>{
   const manifest=JSON.parse(fs.readFileSync(new URL('./manifest.webmanifest',import.meta.url)));
   assert.equal(manifest.short_name,'おくすり記録');assert.equal(manifest.id,'./');assert.equal(manifest.start_url,'./');assert.ok(html.includes('おくすり記録'));assert.ok(!source.includes('class="brand">のみました'));
   const store=new LocalStore(core);assert.equal(store.dbName,'nomimashita-v1:/');
-  const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');assert.ok(sw.includes("'v3-2-compact-rose'"));for(const asset of ['wellness.js','medicine-view.js','brand-mark.svg'])assert.ok(sw.includes("'./"+asset+"'"));
+  const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');assert.ok(sw.includes("'v3-3-calendar-dots'"));for(const asset of ['wellness.js','medicine-view.js','brand-mark.svg'])assert.ok(sw.includes("'./"+asset+"'"));
 });
 
 // Exercise the real application event handlers without a browser or personal data.
@@ -93,7 +95,7 @@ async function appHarness(clock=()=>now,seed=null){
   class TestStore extends LocalStore { constructor(c){super(c,{memory:true,clock});if(seed)this.value=structuredClone(seed);} }
   class Form { constructor(target){this.values=target.values;}get(name){return this.values[name]??null;}getAll(name){return this.values[name]||[];} }
   const source=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'');
-  const ctx={createCore,LocalStore:TestStore,validateBackup,faceIcon,moodLabel,wellnessBanner,wellnessDetails,wellnessEditor,largeDate,verticalMedicines,document:doc,location:{href:'https://example.test/nomimashita/?demo=1'},URL,FormData:Form,Date,structuredClone,crypto:{randomUUID:()=> '12345678-1234-1234-1234-123456789012'},window:{scrollTo(){}},navigator:{},setTimeout(){},setInterval(){},clearTimeout(){}};
+  const ctx={createCore,LocalStore:TestStore,validateBackup,faceIcon,moodLabel,wellnessBanner,wellnessDetails,wellnessEditor,largeDate,verticalMedicines,calendarDoseDots,document:doc,location:{href:'https://example.test/nomimashita/?demo=1'},URL,FormData:Form,Date,structuredClone,crypto:{randomUUID:()=> '12345678-1234-1234-1234-123456789012'},window:{scrollTo(){}},navigator:{},setTimeout(){},setInterval(){},clearTimeout(){}};
   vm.runInNewContext(source,ctx);await new Promise(resolve=>setImmediate(resolve));
   return {element,async click(dataset){events.get('click')({target:{closest:()=>({dataset,disabled:false})}});await new Promise(resolve=>setImmediate(resolve));},async submit(values){events.get('submit')({target:{id:'wellness-editor',values},preventDefault(){}});await new Promise(resolve=>setImmediate(resolve));},async confirm(yes){element(yes?'confirm-yes':'confirm-no').listeners.click();await new Promise(resolve=>setImmediate(resolve));}};
 }
@@ -101,9 +103,9 @@ test('app flow: home banner → selection entry → calendar face and detail →
   const app=await appHarness();assert.ok(app.element('heading').innerHTML.includes('おくすり記録'));assert.ok(app.element('content').innerHTML.includes('体調の記録をする'));
   await app.click({wellnessEdit:day});assert.ok(app.element('content').innerHTML.includes('wellness-editor'));
   await app.submit(sample());assert.ok(app.element('content').innerHTML.includes('今日の体調 · 不調'));
-  await app.click({tab:'calendar'});let html=app.element('content').innerHTML;assert.ok(html.includes('体調 不調・服薬 予定なし'));assert.ok(html.includes('朝から頭が重い。'));assert.ok(html.includes('data-mood="low"'));
+  await app.click({tab:'calendar'});let html=app.element('content').innerHTML;assert.ok(html.includes('体調 不調・服薬予定なし'));assert.ok(html.includes('朝から頭が重い。'));assert.ok(html.includes('data-mood="low"'));
   await app.click({wellnessEdit:day});assert.ok(app.element('content').innerHTML.includes('value="low" checked required'));
-  await app.submit({mood:'good',symptoms:[],note:'落ち着いた'});html=app.element('content').innerHTML;assert.ok(html.includes('体調 良好・服薬 予定なし'));assert.ok(html.includes('落ち着いた'));assert.ok(!html.includes('朝から頭が重い。'));
+  await app.submit({mood:'good',symptoms:[],note:'落ち着いた'});html=app.element('content').innerHTML;assert.ok(html.includes('体調 良好・服薬予定なし'));assert.ok(html.includes('落ち着いた'));assert.ok(!html.includes('朝から頭が重い。'));
   await app.click({wellnessEdit:day});await app.click({wellnessDelete:day});assert.equal(app.element('confirm').open,true);await app.confirm(false);assert.ok(app.element('content').innerHTML.includes('wellness-editor'));
   await app.click({wellnessDelete:day});await app.confirm(true);assert.ok(app.element('content').innerHTML.includes('まだ記録されていません'));
 });
@@ -163,10 +165,10 @@ test('reference home has a large correct JST date and vertical medication rows',
 test('app flow: selected bowel result persists in form and calendar and can be corrected',async()=>{
   const app=await appHarness();assert.ok(app.element('content').innerHTML.includes('9月6日'));assert.ok(app.element('heading').innerHTML.includes('設定を開く'));
   await app.click({wellnessEdit:day});assert.ok(app.element('content').innerHTML.includes('value="unrecorded" checked'));
-  await app.submit({...sample(),bowel:'yes'});assert.ok(app.element('content').innerHTML.includes('トイレ：出た'));
-  await app.click({tab:'calendar'});assert.ok(app.element('content').innerHTML.includes('トイレ（排便）</h3><strong>出た'));
+  await app.submit({...sample(),bowel:'yes'});assert.ok(app.element('content').innerHTML.includes('トイレ：でた'));
+  await app.click({tab:'calendar'});assert.ok(app.element('content').innerHTML.includes('トイレ（排便）</h3><strong>でた'));
   await app.click({wellnessEdit:day});assert.ok(app.element('content').innerHTML.includes('name="bowel" value="yes" checked'));
-  await app.submit({...sample(),bowel:'no'});assert.ok(app.element('content').innerHTML.includes('トイレ（排便）</h3><strong>出ていない'));
+  await app.submit({...sample(),bowel:'no'});assert.ok(app.element('content').innerHTML.includes('トイレ（排便）</h3><strong>でていない'));
   await app.click({tab:'settings'});await app.click({page:'themes'});assert.equal((app.element('content').innerHTML.match(/data-theme-option=/g)||[]).length,4);await app.click({themeOption:'coral'});assert.ok(app.element('content').innerHTML.includes('やさしいコーラル'));
 });
 test('bowel belongs to one day and is retained in backup after midnight and 05:00',()=>{
@@ -179,6 +181,25 @@ function medicationSeed(mask=5){
   s.medicines=[{id:'m_12345678',revisions:[{day,name:'表示確認用の薬',note:'',active:true,slots:[0,1,2].map(i=>({on:!!(mask&(1<<i)),qty:i+1,time:['08:00','12:00','20:00'][i],remind:false}))}]}];
   return s;
 }
+test('calendar dose dots use morning/noon/evening colors and distinguish taken, missing and partial',()=>{
+  const plans=[
+    {slots:[{on:true,taken:true},{on:true,taken:false},{on:true,taken:true}]},
+    {slots:[{on:false},{on:false},{on:true,taken:false}]}
+  ];
+  const dots=calendarDoseDots(plans);
+  assert.deepEqual(dots.statuses,['taken','missing','partial']);
+  assert.ok(dots.html.includes('dose-dot-0 taken'));assert.ok(dots.html.includes('dose-dot-1 missing'));assert.ok(dots.html.includes('dose-dot-2 partial'));
+  assert.equal(dots.text,'朝 服用済み・昼 未チェック・晩 一部服用済み');
+  assert.ok(!/[✓○−]/.test(dots.html));
+  assert.equal(calendarDoseDots([]).text,'服薬予定なし');
+});
+test('calendar dot row omits every unscheduled period across all seven schedules',()=>{
+  for(let mask=1;mask<8;mask++){
+    const dots=calendarDoseDots(core.plans(medicationSeed(mask),day));
+    for(let i=0;i<3;i++)assert.equal(dots.html.includes('dose-dot-'+i),!!(mask&(1<<i)));
+    assert.equal((dots.html.match(/class="dose-dot /g)||[]).length,[0,1,2].filter(i=>mask&(1<<i)).length);
+  }
+});
 test('all seven schedules omit inactive home rows without reindexing morning/noon/evening',()=>{
   for(let mask=1;mask<8;mask++){
     const s=medicationSeed(mask),before=structuredClone(s),html=verticalMedicines(core.plans(s,day),day);
@@ -195,6 +216,10 @@ test('app flow: hidden noon remains absent while evening check works in home and
   await app.click({check:'m_12345678',date:day,slot:'2'});
   assert.ok(app.element('content').innerHTML.includes('data-slot="2" aria-pressed="true"'));
   await app.click({tab:'calendar'});assert.deepEqual(slots(),['0','2']);
+  let calendarHtml=app.element('content').innerHTML;
+  assert.ok(calendarHtml.indexOf('calendar-stamp')<calendarHtml.indexOf('dose-dots'));
+  assert.ok(calendarHtml.includes('dose-dot-0 missing'));assert.ok(calendarHtml.includes('dose-dot-2 taken'));assert.ok(!calendarHtml.includes('class="med-status"'));
+  assert.ok(calendarHtml.includes('朝 未チェック・晩 服用済み'));
   assert.ok(app.element('content').innerHTML.includes('data-slot="2" aria-pressed="true"'));
   assert.ok(!app.element('content').innerHTML.includes('check no-plan'));
   await app.click({check:'m_12345678',date:day,slot:'2'});await app.confirm(true);

@@ -4,7 +4,7 @@ export const MOODS = [
   {id:'low',label:'不調'}, {id:'bad',label:'つらい'}
 ];
 export const BOWEL_OPTIONS = [
-  {id:'yes',label:'出た'}, {id:'no',label:'出ていない'}, {id:'unrecorded',label:'未記録'}
+  {id:'yes',label:'でた'}, {id:'no',label:'でていない'}, {id:'unrecorded',label:'未記録'}
 ];
 export function bowelLabel(id) { return BOWEL_OPTIONS.find(option=>option.id===id)?.label || '未記録'; }
 export const SYMPTOMS = [
@@ -55,7 +55,7 @@ export function wellnessEditor(draft) {
     +'<fieldset class="section wellness-field"><legend><span class="step-number">02</span>気になる症状<span class="optional">任意</span></legend><p class="muted">あてはまるものをすべて選べます。</p><div class="symptom-options">'
     +SYMPTOMS.map(s=>'<label class="symptom-choice"><input type="checkbox" name="symptoms" value="'+s.id+'" '+(draft.symptoms.includes(s.id)?'checked':'')+'><span><b aria-hidden="true">✓</b>'+s.label+'</span></label>').join('')+'</div></fieldset>'
     +'<fieldset class="section wellness-field"><legend><span class="step-number">03</span>トイレ状況（排便）<span class="optional">任意</span></legend><p class="muted">この日の排便はありましたか？</p><div class="bowel-options">'
-    +BOWEL_OPTIONS.map(option=>'<label class="bowel-choice"><input type="radio" name="bowel" value="'+option.id+'" '+((draft.bowel||'unrecorded')===option.id?'checked':'')+'><span><b aria-hidden="true">'+(option.id==='yes'?'✓':option.id==='no'?'−':'·')+'</b>'+option.label+'</span></label>').join('')+'</div></fieldset>'
+    +BOWEL_OPTIONS.map(option=>'<label class="bowel-choice"><input type="radio" name="bowel" value="'+option.id+'" '+((draft.bowel||'unrecorded')===option.id?'checked':'')+'><span>'+option.label+'</span></label>').join('')+'</div></fieldset>'
     +'<section class="section wellness-field"><label class="memo-label" for="wellness-note"><span class="step-number">04</span>具体的な症状・メモ<span class="optional">任意</span></label><textarea id="wellness-note" name="note" maxlength="1000" rows="4" placeholder="どこが、いつから、どのようにつらいかなど">'+escapeHtml(draft.note)+'</textarea><p class="muted memo-hint">書かずに保存しても大丈夫です。1,000文字まで。</p></section>'
     +'<div class="row savebar"><button type="button" data-cancel="1">キャンセル</button><button class="primary" type="submit">体調を保存する</button></div>'
     +(draft.existing?'<button type="button" class="delete-wellness" data-wellness-delete="'+escapeHtml(draft.day)+'">この日の体調記録を削除</button>':'')+'</form>';

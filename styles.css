@@ -66,10 +66,14 @@
     .calendar-section{padding:16px 12px}.calendar .calendar-day{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:78px;padding:5px 0;border-radius:12px}
     .calendar .calendar-number{font-size:14px;line-height:19px;color:var(--text)}
     .calendar .calendar-stamp{display:flex;align-items:center;justify-content:center;height:28px;width:28px}
-    .calendar-stamp .mood-face{height:28px;width:28px}.calendar .med-status{font-size:12px;min-height:16px;line-height:16px}
+    .calendar-stamp .mood-face{height:28px;width:28px}
+    .dose-dots{display:flex!important;align-items:center;justify-content:center;gap:3px;min-height:10px}
+    .dose-dot{display:inline-block!important;width:7px;height:7px;border-radius:50%;border:1.5px solid currentColor;background:var(--panel);flex:none}
+    .dose-dot-0{color:#ed7865}.dose-dot-1{color:#e5a442}.dose-dot-2{color:#65719c}
+    .dose-dot.taken{background:currentColor}.dose-dot.partial{background:linear-gradient(90deg,currentColor 50%,var(--panel) 50%)}
     .calendar button[aria-pressed="true"]{outline:2px solid var(--accent)}
     .calendar-legend{padding-top:12px;border-top:1px solid var(--line);color:var(--muted)}
-    .calendar-legend>span{display:flex;align-items:center;gap:7px;font-size:12px;margin-bottom:4px}.calendar-legend .mood-face{width:22px;height:22px}.calendar-legend small{font-size:12px;display:block}
+    .calendar-legend>span{display:flex;align-items:center;gap:7px;font-size:12px;margin-bottom:6px}.calendar-legend .mood-face{width:22px;height:22px}.calendar-legend small{font-size:12px;display:block;margin-top:5px}.dose-legend{display:flex;align-items:center;gap:14px}.dose-legend>span{display:flex;align-items:center;gap:5px;font-size:12px}.dose-legend .dose-dot{width:9px;height:9px}
     .selected-date h2{font-size:18px;margin:24px 0 4px}.selected-date p{margin:0 0 16px}
     .wellness-detail .row{gap:8px}.wellness-detail h3{margin:0}.text-button{padding:6px 8px;font-size:14px;color:var(--accent);background:transparent}
     .condition-summary{display:flex;align-items:center;gap:12px;margin:10px 0 16px}.condition-summary .mood-face{width:50px;height:50px}.condition-summary strong{font-size:22px}
@@ -85,7 +89,6 @@
     [data-theme="coral"] .section,[data-theme="coral"] .linkrow{border-radius:26px;box-shadow:0 10px 28px #45372c04}
     [data-theme="coral"] .calendar button[aria-pressed="true"]{background:#27313f;outline-color:#27313f}
     [data-theme="coral"] .calendar button[aria-pressed="true"] .calendar-number{color:#fff}
-    [data-theme="coral"] .calendar button[aria-pressed="true"] .med-status{color:#ffa393}
     [data-theme="coral"] .calendar>small:first-child{color:var(--accent)}[data-theme="coral"] .calendar>small:nth-child(7){color:#697195}
     .home-masthead{padding:18px 18px 12px;margin-bottom:6px;border:0;gap:8px}
     .home-masthead .brand-lockup{margin:0;gap:7px}.brand-name{font-size:1.125rem;letter-spacing:.025em;font-weight:750}
@@ -122,8 +125,7 @@
     .bowel-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
     .bowel-choice{position:relative;display:block;margin:0;min-width:0;cursor:pointer;touch-action:manipulation}
     .bowel-choice input{position:absolute;opacity:0;width:1px;height:1px;min-height:0;min-width:0;margin:0;padding:0;border:0;clip-path:inset(50%)}
-    .bowel-choice>span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:76px;padding:8px 3px;border:1px solid var(--line);border-radius:14px;background:var(--bg);font-size:14px;text-align:center;overflow-wrap:anywhere}
-    .bowel-choice b{display:grid;place-items:center;font-size:19px;font-weight:650;width:24px;height:24px}
+    .bowel-choice>span{display:flex;align-items:center;justify-content:center;min-height:54px;padding:8px 3px;border:1px solid var(--line);border-radius:14px;background:var(--bg);font-size:14px;text-align:center;overflow-wrap:anywhere}
     .bowel-choice input:checked+span{border:2px solid var(--accent);padding:7px 2px;background:var(--soft);color:var(--accent);font-weight:600}
     .bowel-choice input:focus-visible+span{outline:3px solid var(--accent);outline-offset:3px}.bowel-choice input:disabled+span{opacity:.6;cursor:wait}
     .bowel-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;margin-bottom:12px;border-top:1px solid var(--line)}

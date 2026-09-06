@@ -20,6 +20,17 @@ export function verticalMedicines(plans,date) {
       return '<button class="dose-row" data-check="'+esc(m.id)+'" data-date="'+esc(date)+'" data-slot="'+i+'" aria-pressed="'+!!slot.taken+'" aria-label="'+esc(m.name)+' '+labels[i]+' '+(slot.taken?'飲んだ・チェックを外す':'飲んだと記録')+'">'+content+'</button>';
     }).join('')+'</div>'+(m.note?'<p class="note">'+esc(m.note)+'</p>':'')+'</section>').join('');
 }
+export function calendarDoseDots(plans) {
+  const statuses=[0,1,2].map(slot=>{
+    const doses=plans.map(m=>m.slots[slot]).filter(dose=>dose?.on);
+    if(!doses.length)return null;
+    const taken=doses.filter(dose=>dose.taken).length;
+    return taken===doses.length?'taken':taken?'partial':'missing';
+  });
+  const text=statuses.map((status,i)=>status?labels[i]+' '+({taken:'服用済み',partial:'一部服用済み',missing:'未チェック'}[status]):'').filter(Boolean).join('・')||'服薬予定なし';
+  const html='<span class="dose-dots" aria-hidden="true">'+statuses.map((status,i)=>status?'<i class="dose-dot dose-dot-'+i+' '+status+'"></i>':'').join('')+'</span>';
+  return {html,text,statuses};
+}
 function quantityTitle(m) {
   const active=m.slots.filter(slot=>slot.on);
   if(!active.length)return '';
