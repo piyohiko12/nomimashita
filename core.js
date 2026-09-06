@@ -7,8 +7,8 @@ export function createCore() {
   // Fixed Asia/Tokyo day boundary: UTC+9 minus five hours, independent of script TZ.
   function day(iso) { return new Date(new Date(iso).getTime() + 4 * 3600000).toISOString().slice(0, 10); }
   function initial(now) {
-    return { version: 2, revision: 0, startedDay: day(now), updatedAt: now,
-      settings: { theme: 'simple' }, medicines: [], records: {}, wellness: {} };
+    return { version: 3, revision: 0, startedDay: day(now), updatedAt: now,
+      settings: { theme: 'coral' }, medicines: [], records: {}, wellness: {} };
   }
   function revision(m, date) {
     return m.revisions.filter(function (r) { return r.day <= date; }).slice(-1)[0] || null;
@@ -65,10 +65,10 @@ export function createCore() {
   function apply(previous, request, now) {
     if (request.revision !== previous.revision) fail('別の画面で記録が更新されています。「再読み込み」で最新の記録を確認してください。');
     var state = clone(previous), today = day(now);
-    state.version = 2;
+    state.version = 3;
     state.wellness = state.wellness || {};
     if (request.type === 'theme') {
-      if (['simple', 'soft', 'character'].indexOf(request.theme) < 0) fail('テーマを選び直してください。');
+      if (['coral', 'simple', 'soft', 'character'].indexOf(request.theme) < 0) fail('テーマを選び直してください。');
       state.settings.theme = request.theme;
     } else if (request.type === 'medicine') {
       if (request.day !== today) fail('朝5時を過ぎました。再読み込みしてから保存してください。');

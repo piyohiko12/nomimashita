@@ -78,3 +78,51 @@
     .wellness-note p{white-space:pre-wrap;overflow-wrap:anywhere;margin:7px 0 0;font-size:16px}.medication-heading{margin:22px 0 12px;font-size:16px}
     @media(max-width:359px){main{padding-inline:14px}.section{padding:14px}.calendar-section{padding:12px 8px}.wellness-field{padding:12px}.mood-options{gap:3px}.mood-option-content strong{font-size:12px}.symptom-options{grid-template-columns:repeat(2,minmax(0,1fr))}.wellness-banner{padding:14px 12px;gap:9px}.check strong{font-size:13px}.slots{gap:6px}}
     @media(prefers-reduced-motion:no-preference){.wellness-banner,.mood-option-content,.symptom-choice>span{transition:background .15s,border-color .15s}}
+
+    /* Reference-inspired coral theme; saved choices in the other themes remain intact. */
+    [data-theme="coral"]{--bg:#fff6f2;--panel:#fffdfd;--text:#27313f;--muted:#747982;--accent:#b94f3e;--soft:#fff0e9;--line:#e9dfdc;--red:#a53636;--check-fill:#d9634e;--check-line:#e5a497}
+    body[data-theme="coral"]{background:linear-gradient(150deg,#ffede7 0,#fff8f5 42%,#f8f3f1 100%);background-attachment:fixed}
+    [data-theme="coral"] .section,[data-theme="coral"] .linkrow{border-radius:26px;box-shadow:0 10px 28px #45372c04}
+    [data-theme="coral"] .calendar button[aria-pressed="true"]{background:#27313f;outline-color:#27313f}
+    [data-theme="coral"] .calendar button[aria-pressed="true"] .calendar-number{color:#fff}
+    [data-theme="coral"] .calendar button[aria-pressed="true"] .med-status{color:#ffa393}
+    [data-theme="coral"] .calendar>small:first-child{color:var(--accent)}[data-theme="coral"] .calendar>small:nth-child(7){color:#697195}
+    .home-masthead{padding:23px 18px 18px;margin-bottom:10px;border:0;gap:10px}
+    .home-masthead .brand-lockup{margin:0;gap:9px}.brand-name{font-size:21px;letter-spacing:.025em;font-weight:750}
+    .brand-mark{width:37px;height:37px;border-radius:0}.header-actions{display:flex;align-items:center;gap:10px;flex:none}
+    .header-actions .mascot{height:44px;width:44px}.header-actions .hearts{width:38px;font-size:14px;gap:1px}.header-actions .hearts b{font-size:25px}
+    .settings-shortcut{display:grid;place-items:center;padding:0;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--muted)}
+    .settings-shortcut svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+    .today-card{padding:22px 20px 18px;border-radius:26px}
+    .today-date{margin-bottom:22px}.today-date>p{margin:0 0 4px;color:var(--accent);font-size:14px;font-weight:700;letter-spacing:.08em}
+    .today-date h1{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;font-size:clamp(2.5rem,12vw,3.5rem);letter-spacing:-.045em;line-height:1.3;font-weight:750}
+    .today-date h1>span{font-size:18px;color:var(--muted);letter-spacing:0;white-space:nowrap}
+    .vertical-medicine+.vertical-medicine{border-top:1px solid var(--line);margin-top:24px;padding-top:22px}
+    .vertical-medicine h2{font-size:17px;line-height:1.6;color:var(--muted);margin:0 0 16px;font-weight:650}
+    .medicine-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--check-fill,var(--accent));box-shadow:0 0 0 5px var(--soft);margin-right:10px;vertical-align:2px}
+    .medicine-quantity{font-size:14px;font-weight:500;color:var(--muted);overflow-wrap:anywhere}
+    .dose-list{display:flex;flex-direction:column;gap:12px}
+    .dose-row{display:flex;width:100%;align-items:center;gap:13px;min-height:102px;padding:16px 14px;text-align:left;background:var(--panel);border:1.5px solid var(--line);border-radius:22px}
+    .dose-row[aria-pressed="true"]{background:var(--soft);border-color:var(--check-line,var(--accent))}
+    .dose-time-icon{display:grid;place-items:center;flex:none;width:47px;height:47px;border-radius:16px;background:var(--soft);color:var(--accent)}
+    .dose-time-icon svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    [data-theme="coral"] .dose-time-2{background:#eef0f8;color:#646d95}[data-theme="coral"] .dose-time-1{background:#fff5dc;color:#a97b31}
+    .dose-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:1px}.dose-copy strong{font-size:20px;line-height:1.5}.dose-copy>span{font-size:14px;color:var(--muted)}.dose-copy>small{font-size:12px;line-height:1.5;color:var(--muted)}
+    .dose-row[aria-pressed="true"] .dose-copy>span{font-weight:600;color:var(--text)}
+    .round-check{width:30px;height:30px;border:2px solid var(--line);border-radius:50%;flex:none;display:grid;place-items:center}
+    .round-check svg{height:21px;width:21px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+    .dose-row[aria-pressed="true"] .round-check{background:var(--check-fill,var(--accent));border-color:var(--check-fill,var(--accent))}
+    .dose-inactive{opacity:.52;min-height:87px;background:var(--bg)}.dose-inactive .round-check{border-style:dashed}
+    .automatic-save{margin:18px 0 0;text-align:center;font-size:12px;color:var(--muted)}.automatic-save>span{color:#648e7e;font-size:16px;font-weight:800}
+    .vertical-empty{padding:4px 0 12px}.vertical-empty p{font-size:15px;color:var(--muted)}
+    .mini-slots{grid-template-columns:1fr;gap:5px}.mini-slots>span{display:flex;align-items:center;justify-content:space-between;padding:5px 11px}.mini-slots b{font-size:16px}
+    .bowel-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+    .bowel-choice{position:relative;display:block;margin:0;min-width:0;cursor:pointer;touch-action:manipulation}
+    .bowel-choice input{position:absolute;opacity:0;width:1px;height:1px;min-height:0;min-width:0;margin:0;padding:0;border:0;clip-path:inset(50%)}
+    .bowel-choice>span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:76px;padding:8px 3px;border:1px solid var(--line);border-radius:14px;background:var(--bg);font-size:14px;text-align:center;overflow-wrap:anywhere}
+    .bowel-choice b{display:grid;place-items:center;font-size:19px;font-weight:650;width:24px;height:24px}
+    .bowel-choice input:checked+span{border:2px solid var(--accent);padding:7px 2px;background:var(--soft);color:var(--accent);font-weight:600}
+    .bowel-choice input:focus-visible+span{outline:3px solid var(--accent);outline-offset:3px}.bowel-choice input:disabled+span{opacity:.6;cursor:wait}
+    .bowel-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;margin-bottom:12px;border-top:1px solid var(--line)}
+    .bowel-summary h3{font-size:14px;color:var(--muted);font-weight:500}.bowel-summary strong{font-size:15px;color:var(--accent)}
+    @media(max-width:359px){.home-masthead{padding-inline:14px}.brand-name{font-size:20px}.header-actions{gap:5px}.header-actions .mascot{width:34px;height:34px}.today-card{padding:20px 16px 16px}.dose-row{padding:13px 11px;gap:10px}.dose-time-icon{width:42px;height:42px}.dose-copy>span{font-size:13px}.round-check{width:28px;height:28px}.bowel-options{gap:5px}.bowel-choice>span{font-size:13px}}

@@ -2,12 +2,12 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <title>ここちログ — お薬と体調の記録</title>
+  <title>お薬記録 — 服薬と体調のカレンダー</title>
   <meta name="description" content="お薬のチェックと毎日の体調を、ひとつのカレンダーに。記録はこの端末の中だけに保存します。">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#176b50">
+  <meta name="theme-color" content="#ed7b65">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="ここちログ">
+  <meta name="apple-mobile-web-app-title" content="お薬記録">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <link rel="manifest" href="./manifest.webmanifest">
@@ -16,9 +16,9 @@
   <meta name="color-scheme" content="light">
   <link rel="stylesheet" href="./styles.css">
 </head>
-<body data-theme="simple">
+<body data-theme="coral">
   <div id="app">
-    <header id="heading"><div class="heading-copy"><div class="brand-lockup"><img class="brand-mark" src="./icon.svg" alt=""><span class="brand-name">ここち<span>ログ</span></span></div><h1>今日の記録</h1></div></header>
+    <header id="heading" class="home-masthead"><div class="heading-copy"><div class="brand-lockup"><img class="brand-mark" src="./brand-mark.svg" alt=""><span class="brand-name">お薬記録</span></div></div></header>
     <div id="message" class="message" role="status" aria-live="polite">記録を読み込んでいます…</div>
     <main id="content"><section class="section empty"><p>この端末の記録を読み込みます。</p><noscript>JavaScriptを有効にして開いてください。</noscript></section></main>
     <div id="saved" class="saved"></div><div id="offline" class="saved" role="status"></div><nav id="nav" aria-label="メイン画面"></nav>

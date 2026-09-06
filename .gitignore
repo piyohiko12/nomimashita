@@ -2,5 +2,6 @@ node_modules/
 .DS_Store
 nomimashita-*.json
 cocochi-log-*.json
+okusuri-kiroku-*.json
 backups/
 *.log

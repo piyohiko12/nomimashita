@@ -1,14 +1,14 @@
 /** Local-only persistence. No network requests or account credentials. */
 export function validateBackup(input, core, now = new Date().toISOString()) {
   // Old exports and the existing IndexedDB name stay compatible after the rename.
-  const data = input && ['のみました','ここちログ'].includes(input.app) ? input.state : input;
+  const data = input && ['のみました','ここちログ','お薬記録'].includes(input.app) ? input.state : input;
   const fail = () => { throw new Error('バックアップの内容や形式が正しくありません。記録は変更していません。'); };
   const object = v => !!v && typeof v === 'object' && !Array.isArray(v);
   const time = v => typeof v === 'string' && v.length <= 40 && Number.isFinite(Date.parse(v));
   const today = core.day(now);
-  if (!object(data) || ![1,2].includes(data.version) || !Number.isSafeInteger(data.revision) || data.revision < 0
+  if (!object(data) || ![1,2,3].includes(data.version) || !Number.isSafeInteger(data.revision) || data.revision < 0
     || !core.validDay(data.startedDay) || data.startedDay > today || !time(data.updatedAt)
-    || !object(data.settings) || !['simple','soft','character'].includes(data.settings.theme)
+    || !object(data.settings) || !['coral','simple','soft','character'].includes(data.settings.theme)
     || !Array.isArray(data.medicines) || data.medicines.length > 100 || !object(data.records)) fail();
   const ids = new Set();
   const medicines = data.medicines.map(m => {
@@ -44,16 +44,17 @@ export function validateBackup(input, core, now = new Date().toISOString()) {
     }
   }
   const wellness = {};
-  if (data.version === 2 || data.wellness !== undefined) {
+  if (data.version >= 2 || data.wellness !== undefined) {
     if (!object(data.wellness) || Object.keys(data.wellness).length > 30000) fail();
     for (const [date, entry] of Object.entries(data.wellness)) {
       if (!core.validDay(date) || date < data.startedDay || date > today || !object(entry) || !time(entry.updatedAt)) fail();
+      if (data.version === 3 && entry.bowel === undefined) fail();
       wellness[date] = {...core.validateWellness(entry),updatedAt:entry.updatedAt};
     }
   }
-  // Version 2 stops old cached clients from dropping newly saved wellness data.
+  // Version 3 stops old cached clients from dropping bowel records or the coral theme.
   // Whitelist fields instead of trusting arbitrary JSON keys from imported files.
-  return {version:2,revision:data.revision,startedDay:data.startedDay,updatedAt:data.updatedAt,
+  return {version:3,revision:data.revision,startedDay:data.startedDay,updatedAt:data.updatedAt,
     settings:{theme:data.settings.theme},medicines,records,wellness};
 }
 
