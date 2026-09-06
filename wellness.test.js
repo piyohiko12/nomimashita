@@ -81,7 +81,7 @@ test('name and PWA identity preserve existing installation and storage',()=>{
   const manifest=JSON.parse(fs.readFileSync(new URL('./manifest.webmanifest',import.meta.url)));
   assert.equal(manifest.short_name,'おくすり記録');assert.equal(manifest.id,'./');assert.equal(manifest.start_url,'./');assert.ok(html.includes('おくすり記録'));assert.ok(!source.includes('class="brand">のみました'));
   const store=new LocalStore(core);assert.equal(store.dbName,'nomimashita-v1:/');
-  const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');assert.ok(sw.includes("'v4-1-medicine-delete'"));for(const asset of ['wellness.js','medicine-view.js','brand-mark.svg'])assert.ok(sw.includes("'./"+asset+"'"));
+  const sw=fs.readFileSync(new URL('./sw.js',import.meta.url),'utf8');assert.ok(sw.includes("'v4-2-home-icon'"));for(const asset of ['wellness.js','medicine-view.js','brand-mark.svg'])assert.ok(sw.includes("'./"+asset+"'"));
 });
 
 // Exercise the real application event handlers without a browser or personal data.
@@ -258,14 +258,14 @@ test('compact home retains touch-sized controls and responsive date typography',
   assert.ok(css.includes('min-height:44px'));assert.ok(css.includes('width:44px;height:44px'));
   assert.ok(!css.includes('min-height:102px'));assert.ok(!css.includes('font-size:clamp(2.5rem,12vw,3.5rem)'));
 });
-test('rose capsule icons have opaque PNGs at iPhone and PWA sizes and cache-matched version URLs',()=>{
+test('supplied capsule and check icon has opaque PNGs at iPhone and PWA sizes and cache-matched version URLs',()=>{
   const root=new URL('./',import.meta.url),html=fs.readFileSync(new URL('index.html',root),'utf8'),sw=fs.readFileSync(new URL('sw.js',root),'utf8');
   const manifest=JSON.parse(fs.readFileSync(new URL('manifest.webmanifest',root)));
   for(const [name,size] of [['apple-touch-icon.png',180],['icon-192.png',192],['icon-512.png',512]]){
     const png=fs.readFileSync(new URL(name,root));assert.equal(png.subarray(1,4).toString(),'PNG');assert.equal(png.readUInt32BE(16),size);assert.equal(png.readUInt32BE(20),size);assert.equal(png[25],2);
-    assert.ok(sw.includes('./'+name+'?v=rose-1'));
+    assert.ok(sw.includes('./'+name+'?v=pill-check-1'));
   }
   for(const icon of manifest.icons){assert.ok(sw.includes(icon.src));assert.ok(fs.existsSync(new URL(icon.src.split('?')[0],root)));}
-  assert.ok(html.includes('sizes="180x180" href="./apple-touch-icon.png?v=rose-1"'));
+  assert.ok(html.includes('sizes="180x180" href="./apple-touch-icon.png?v=pill-check-1"'));
   assert.ok(fs.readFileSync(new URL('icon.svg',root),'utf8').includes('カプセルとチェック'));
 });

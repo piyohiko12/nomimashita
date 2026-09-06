@@ -1,7 +1,7 @@
 const PREFIX = 'nomimashita-shell-' + self.registration.scope + '-';
-const CACHE = PREFIX + 'v4-1-medicine-delete';
+const CACHE = PREFIX + 'v4-2-home-icon';
 const SHELL = ['./','./index.html','./styles.css','./app.js','./core.js','./storage.js','./wellness.js','./medicine-view.js','./brand-mark.svg',
-  './manifest.webmanifest','./icon.svg?v=rose-1','./icon-192.png?v=rose-1','./icon-512.png?v=rose-1','./apple-touch-icon.png?v=rose-1'];
+  './manifest.webmanifest','./icon-192.png?v=pill-check-1','./icon-512.png?v=pill-check-1','./apple-touch-icon.png?v=pill-check-1'];
 self.addEventListener('install', event => event.waitUntil(
   caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting())
 ));
